@@ -50,9 +50,6 @@ class LocalLink extends ApolloLink {
     if (!storage && typeof localStorage === 'undefined') {
       throw new LocalLinkError('Could not determine a storage to use')
     }
-    else if (!validStorage(storage)) {
-      throw new LocalLinkError('Must provide a valid storage')
-    }
 
     this.generateKey = generateKey
     this.shouldCache = shouldCache
@@ -72,19 +69,39 @@ class LocalLink extends ApolloLink {
       : this.shouldCache
 
   /**
+   * Retrieves the storage.
+   */
+  getStorage = operation => {
+    const storage =
+      typeof this.storage === 'function'
+        ? this.storage(operation)
+        : this.storage
+
+    if (!validStorage(storage)) {
+      throw new LocalLinkError('Must provide a valid storage')
+    }
+
+    return storage
+  }
+
+  /**
    * Link query requester.
    */
   request = (operation, forward) => {
     if (this.isCacheable(operation)) {
       const key = this.generateKey(operation)
-      const cached = this.storage.getItem(key)
+      const cached = this.getStorage(operation).getItem(key)
 
       if (cached) {
         return Observable.of(this.denormalize(cached, operation))
       }
 
       return forward(operation).map(result => {
-        this.storage.setItem(key, this.normalize(result, operation))
+        this.getStorage(operation).setItem(
+          key,
+          this.normalize(result, operation)
+        )
+
         return result
       })
     }

@@ -19,7 +19,8 @@
     "prepublish": "npm test && npm run lint && npm run compile"
   },
   "dependencies": {
-    "apollo-link": "^1.2.3"
+    "apollo-link": "^1.2.3",
+    "localStorage": "^1.0.4"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
@@ -30,8 +31,7 @@
     "eslint-config-taller": "^2.0.0",
     "graphql": "^14.0.2",
     "graphql-tag": "^2.10.0",
-    "jest": "^23.1.0",
-    "node-persist": "2.x.x"
+    "jest": "^23.1.0"
   },
   "jest": {
     "testEnvironment": "node",

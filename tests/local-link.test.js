@@ -1,6 +1,6 @@
 import { ApolloLink, execute, toPromise, Observable } from 'apollo-link'
 import gql from 'graphql-tag'
-import persistor from 'node-persist'
+import localStorage from 'localStorage'
 
 import { LocalLink } from 'apollo-link-local'
 
@@ -40,7 +40,8 @@ describe('LocalLink', () => {
 
   beforeEach(() => {
     called = 0
-    global.localStorage = persistor.create()
+    localStorage.clear()
+    global.localStorage = localStorage
   })
 
   it('passes a query forward on', async () => {
@@ -52,5 +53,34 @@ describe('LocalLink', () => {
     const result = await toPromise(execute(link, requests.simple))
 
     expect(result).toEqual(results.simple)
+  })
+
+  it('should cache the results of a query', async () => {
+    const link = ApolloLink.from([
+      new LocalLink({ shouldCache: true }),
+      new ApolloLink(() => Observable.of(results.simple))
+    ])
+
+    const result = await toPromise(execute(link, requests.simple))
+
+    expect(result).toEqual(results.simple)
+    expect(localStorage.getItem('key')).not.toBeNull()
+  })
+
+  it('should reuse previous results of a query', async () => {
+    const link = ApolloLink.from([
+      new LocalLink({ shouldCache: true }),
+      new ApolloLink(() => {
+        called++
+        return Observable.of(results.simple)
+      })
+    ])
+
+    const result1 = await toPromise(execute(link, requests.simple))
+    const result2 = await toPromise(execute(link, requests.simple))
+
+    expect(result1).toEqual(results.simple)
+    expect(result2).toEqual(results.simple)
+    expect(called).toBe(1)
   })
 })

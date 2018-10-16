@@ -27,6 +27,12 @@ class LocalLink extends ApolloLink {
   shouldCache
 
   /**
+   * @property {Function} [generateKey] - A callback to generate a key for
+   *  an operation. Defaults to using `operation.toKey`.
+   */
+  generateKey
+
+  /**
    * @property {(Object|Function)} [storage] - The Storage in use. Will
    *  default to window.localStorage when available.
    *
@@ -36,6 +42,7 @@ class LocalLink extends ApolloLink {
 
   constructor ({
     shouldCache,
+    generateKey = operation => operation.toKey(),
     storage = typeof localStorage !== 'undefined' ? localStorage : null
   } = {}) {
     super()
@@ -51,6 +58,7 @@ class LocalLink extends ApolloLink {
       throw new LocalLinkError('Must provide a valid storage')
     }
 
+    this.generateKey = generateKey
     this.shouldCache = shouldCache
     this.storage = storage
   }
@@ -72,13 +80,15 @@ class LocalLink extends ApolloLink {
    */
   request = (operation, forward) => {
     if (this.isCacheable(operation)) {
-      const cached = this.storage.getItem('key')
+      const key = this.generateKey(operation)
+      const cached = this.storage.getItem(key)
+
       if (cached) {
         return Observable.of(this.denormalize(cached, operation))
       }
 
       return forward(operation).map(result => {
-        this.storage.setItem('key', this.normalize(result, operation))
+        this.storage.setItem(key, this.normalize(result, operation))
         return result
       })
     }

@@ -1,4 +1,11 @@
-import { ApolloLink, execute, toPromise, Observable } from 'apollo-link'
+import {
+  ApolloLink,
+  execute,
+  toPromise,
+  Observable,
+  createOperation
+} from 'apollo-link'
+
 import gql from 'graphql-tag'
 import localStorage from 'localStorage'
 
@@ -6,21 +13,28 @@ import { LocalLink } from 'apollo-link-local'
 
 const queries = {
   simple: gql`
-    query SimpleQuery {
+    query Simple {
       field
     }
   `,
 
+  other: gql`
+    query Other {
+      other
+    }
+  `,
+
   directive: gql`
-    query LocalQuery @local {
+    query LocalDirective @local {
       field
     }
   `
 }
 
 const requests = {
-  simple: { query: queries.simple },
-  directive: { query: queries.directive }
+  simple: createOperation({}, { query: queries.simple, variables: {} }),
+  other: createOperation({}, { query: queries.other, variables: {} }),
+  directive: createOperation({}, { query: queries.directive, variables: {} })
 }
 
 // Fulfil operation names.
@@ -32,6 +46,7 @@ for (let i in requests) {
 
 const results = {
   simple: { data: { field: 'simple value' } },
+  other: { data: { other: 'other value' } },
   directive: { data: { field: 'directive value' } }
 }
 
@@ -64,7 +79,7 @@ describe('LocalLink', () => {
     const result = await toPromise(execute(link, requests.simple))
 
     expect(result).toEqual(results.simple)
-    expect(localStorage.getItem('key')).not.toBeNull()
+    expect(localStorage.getItem(requests.simple.toKey())).not.toBeNull()
   })
 
   it('should reuse previous results of a query', async () => {
@@ -82,5 +97,24 @@ describe('LocalLink', () => {
     expect(result1).toEqual(results.simple)
     expect(result2).toEqual(results.simple)
     expect(called).toBe(1)
+  })
+
+  it('should cache multiple query results', async () => {
+    const link = ApolloLink.from([
+      new LocalLink({ shouldCache: true }),
+      new ApolloLink(({ operationName }) => {
+        called++
+
+        if (operationName === 'Simple') return Observable.of(results.simple)
+        if (operationName === 'Other') return Observable.of(results.other)
+      })
+    ])
+
+    const result1 = await toPromise(execute(link, requests.simple))
+    const result2 = await toPromise(execute(link, requests.other))
+
+    expect(result1).toEqual(results.simple)
+    expect(result2).toEqual(results.other)
+    expect(called).toBe(2)
   })
 })

@@ -31,10 +31,16 @@ const queries = {
   `
 }
 
+const variables = {}
+const extensions = {}
+
 const operations = {
-  simple: createOperation({}, { query: queries.simple, variables: {} }),
-  other: createOperation({}, { query: queries.other, variables: {} }),
-  directive: createOperation({}, { query: queries.directive, variables: {} })
+  simple: createOperation({}, { query: queries.simple, variables, extensions }),
+  other: createOperation({}, { query: queries.other, variables, extensions }),
+  directive: createOperation(
+    {},
+    { query: queries.directive, variables, extensions }
+  )
 }
 
 // Fulfil operation names.
@@ -70,8 +76,9 @@ describe('LocalLink', () => {
       expect(() => new LocalLink()).toThrow(/storage to use/)
     })
 
-    it('should throw when no storage can be determined', () => {
-      expect(() => new LocalLink({ storage: {} })).toThrow(/valid storage/)
+    it('should throw when invalid storage provided', () => {
+      const link = new LocalLink({ storage: {} })
+      expect(() => execute(link, operations.simple)).toThrow(/valid storage/)
     })
   })
 
@@ -180,16 +187,16 @@ describe('LocalLink', () => {
     })
   })
 
-  describe.only('storage', () => {
+  describe('storage', () => {
     const generateStorage = () => {
       const cache = {}
-
-      return {
+      const storage = {
         getItem: jest.fn(key => cache[key]),
         setItem: jest.fn((key, value) => (cache[key] = value)),
         removeItem: jest.fn(key => delete cache[key]),
         clear: jest.fn(() => Object.keys(cache).forEach(storage.removeItem))
       }
+      return storage
     }
 
     it('should be possible to provide a custom storage', async () => {
@@ -211,6 +218,44 @@ describe('LocalLink', () => {
       expect(storage.getItem).toHaveBeenCalledTimes(2)
       expect(storage.getItem(operations.other.toKey())).not.toBeNull()
       expect(called).toBe(1)
+    })
+
+    it('should be possible to provide a factory as storage', async () => {
+      const storage = generateStorage()
+      const factory = jest.fn(operation => storage)
+
+      const link = ApolloLink.from([
+        new LocalLink({ storage: factory }),
+        new ApolloLink(() => {
+          called++
+          return Observable.of(results.simple)
+        })
+      ])
+
+      await toPromise(execute(link, operations.simple))
+      const result = await toPromise(execute(link, operations.simple))
+
+      expect(result).toEqual(results.simple)
+      expect(storage.setItem).toHaveBeenCalledTimes(1)
+      expect(storage.getItem).toHaveBeenCalledTimes(2)
+      expect(storage.getItem(operations.other.toKey())).not.toBeNull()
+      expect(called).toBe(1)
+    })
+
+    it('should provide a factory storage with the operation', async () => {
+      const storage = generateStorage()
+      const factory = jest.fn(operation => storage)
+
+      const link = ApolloLink.from([
+        new LocalLink({ storage: factory }),
+        new ApolloLink(() => Observable.of(results.simple))
+      ])
+
+      await toPromise(execute(link, operations.simple))
+
+      expect(storage.setItem).toHaveBeenCalledTimes(1)
+      expect(storage.getItem).toHaveBeenCalledTimes(1)
+      expect(factory).toHaveBeenCalledWith(operations.simple)
     })
   })
 })

@@ -1,4 +1,6 @@
-import { ApolloLink } from 'apollo-link'
+import { visit } from 'graphql'
+import { print } from 'graphql/language/printer'
+import { ApolloLink, Observable } from 'apollo-link'
 
 class LocalLinkError extends Error {
   constructor (message) {
@@ -53,10 +55,34 @@ class LocalLink extends ApolloLink {
     this.storage = storage
   }
 
+  normalize = data => JSON.stringify(data)
+
+  denormalize = data => JSON.parse(data)
+
+  /**
+   * Determines if an operation is cacheable or not.
+   */
+  isCacheable = operation =>
+    typeof this.shouldCache === 'function'
+      ? this.shouldCache(operation)
+      : this.shouldCache
+
   /**
    * Link query requester.
    */
   request = (operation, forward) => {
+    if (this.isCacheable(operation)) {
+      const cached = this.storage.getItem('key')
+      if (cached) {
+        return Observable.of(this.denormalize(cached, operation))
+      }
+
+      return forward(operation).map(result => {
+        this.storage.setItem('key', this.normalize(result, operation))
+        return result
+      })
+    }
+
     return forward(operation)
   }
 }

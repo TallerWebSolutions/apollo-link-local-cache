@@ -20,9 +20,9 @@ const validStorage = storage =>
 
 class LocalLink extends ApolloLink {
   /**
-   * @property {(boolean|Function)} shouldCache - The cache policy. When set
+   * @property {(boolean|Function)} [shouldCache] - The cache policy. When set
    *  to `true` defaults to cache all. When set to a callback, will receive the
-   *  operation as argument, and should return `true` or `false`.
+   *  operation as argument, and should return `true` or `false`. Defaults to `true`.
    */
   shouldCache
 
@@ -41,15 +41,11 @@ class LocalLink extends ApolloLink {
   storage
 
   constructor ({
-    shouldCache,
+    shouldCache = true,
     generateKey = operation => operation.toKey(),
     storage = typeof localStorage !== 'undefined' ? localStorage : null
   } = {}) {
     super()
-
-    if (typeof shouldCache === 'undefined') {
-      throw new LocalLinkError('You must provide the `shouldCache` option')
-    }
 
     if (!storage && typeof localStorage === 'undefined') {
       throw new LocalLinkError('Could not determine a storage to use')

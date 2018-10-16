@@ -179,4 +179,38 @@ describe('LocalLink', () => {
       expect(called).toBe(2)
     })
   })
+
+  describe.only('storage', () => {
+    const generateStorage = () => {
+      const cache = {}
+
+      return {
+        getItem: jest.fn(key => cache[key]),
+        setItem: jest.fn((key, value) => (cache[key] = value)),
+        removeItem: jest.fn(key => delete cache[key]),
+        clear: jest.fn(() => Object.keys(cache).forEach(storage.removeItem))
+      }
+    }
+
+    it('should be possible to provide a custom storage', async () => {
+      const storage = generateStorage()
+
+      const link = ApolloLink.from([
+        new LocalLink({ storage }),
+        new ApolloLink(() => {
+          called++
+          return Observable.of(results.simple)
+        })
+      ])
+
+      await toPromise(execute(link, operations.simple))
+      const result = await toPromise(execute(link, operations.simple))
+
+      expect(result).toEqual(results.simple)
+      expect(storage.setItem).toHaveBeenCalledTimes(1)
+      expect(storage.getItem).toHaveBeenCalledTimes(2)
+      expect(storage.getItem(operations.other.toKey())).not.toBeNull()
+      expect(called).toBe(1)
+    })
+  })
 })

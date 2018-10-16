@@ -99,7 +99,7 @@ describe('LocalLink', () => {
     expect(called).toBe(1)
   })
 
-  it('should cache multiple query results', async () => {
+  it('should cache the results of multiple queries', async () => {
     const link = ApolloLink.from([
       new LocalLink({ shouldCache: true }),
       new ApolloLink(({ operationName }) => {
@@ -110,11 +110,35 @@ describe('LocalLink', () => {
       })
     ])
 
-    const result1 = await toPromise(execute(link, requests.simple))
-    const result2 = await toPromise(execute(link, requests.other))
+    const simple = await toPromise(execute(link, requests.simple))
+    const other = await toPromise(execute(link, requests.other))
 
-    expect(result1).toEqual(results.simple)
-    expect(result2).toEqual(results.other)
+    expect(simple).toEqual(results.simple)
+    expect(other).toEqual(results.other)
+    expect(called).toBe(2)
+  })
+
+  it('should reuse previous results of of multiple queries', async () => {
+    const link = ApolloLink.from([
+      new LocalLink({ shouldCache: true }),
+      new ApolloLink(({ operationName }) => {
+        called++
+
+        if (operationName === 'Simple') return Observable.of(results.simple)
+        if (operationName === 'Other') return Observable.of(results.other)
+      })
+    ])
+
+    const simple1 = await toPromise(execute(link, requests.simple))
+    const other1 = await toPromise(execute(link, requests.other))
+
+    const simple2 = await toPromise(execute(link, requests.simple))
+    const other2 = await toPromise(execute(link, requests.other))
+
+    expect(simple1).toEqual(results.simple)
+    expect(simple2).toEqual(results.simple)
+    expect(other1).toEqual(results.other)
+    expect(other2).toEqual(results.other)
     expect(called).toBe(2)
   })
 })

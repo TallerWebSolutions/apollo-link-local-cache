@@ -1,5 +1,5 @@
 {
-  "name": "apollo-link-local",
+  "name": "apollo-link-local-cache",
   "version": "0.1.0",
   "description": "Apollo Link that facilitates locally storing query results",
   "author": "Lucas Constantino Silva <lucasconstantinosilva@gmail.com>",
@@ -40,7 +40,7 @@
       "src/**/*.js"
     ],
     "moduleNameMapper": {
-      "^apollo-link-local(.*)$": "<rootDir>/src$1"
+      "^apollo-link-local-cache(.*)$": "<rootDir>/src$1"
     }
   },
   "keywords": [
@@ -53,10 +53,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/TallerWebSolutions/apollo-link-local.git"
+    "url": "git+https://github.com/TallerWebSolutions/apollo-link-local-cache.git"
   },
   "bugs": {
-    "url": "https://github.com/TallerWebSolutions/apollo-link-local/issues"
+    "url": "https://github.com/TallerWebSolutions/apollo-link-local-cache/issues"
   },
-  "homepage": "https://github.com/TallerWebSolutions/apollo-link-local#readme"
+  "homepage": "https://github.com/TallerWebSolutions/apollo-link-local-cache#readme"
 }

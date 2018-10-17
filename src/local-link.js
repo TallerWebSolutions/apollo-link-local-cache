@@ -1,8 +1,8 @@
 import { ApolloLink, Observable } from 'apollo-link'
 
-class LocalLinkError extends Error {
+class LocalCacheLinkError extends Error {
   constructor (message) {
-    super(`[LocalLink] ${message}`)
+    super(`[LocalCacheLink] ${message}`)
   }
 }
 
@@ -16,7 +16,7 @@ const validStorage = storage =>
   storage.removeItem &&
   storage.clear
 
-class LocalLink extends ApolloLink {
+class LocalCacheLink extends ApolloLink {
   /**
    * @property {(boolean|Function)} [shouldCache] - The cache policy. When set
    *  to `true` defaults to cache all. When set to a callback, will receive the
@@ -60,7 +60,7 @@ class LocalLink extends ApolloLink {
     super()
 
     if (!storage && typeof localStorage === 'undefined') {
-      throw new LocalLinkError('Could not determine a storage to use')
+      throw new LocalCacheLinkError('Could not determine a storage to use')
     }
 
     this.generateKey = generateKey
@@ -88,7 +88,7 @@ class LocalLink extends ApolloLink {
         : this.storage
 
     if (!validStorage(storage)) {
-      throw new LocalLinkError('Must provide a valid storage')
+      throw new LocalCacheLinkError('Must provide a valid storage')
     }
 
     return storage
@@ -120,6 +120,6 @@ class LocalLink extends ApolloLink {
   }
 }
 
-const createLocalLink = config => new LocalLink(config)
+const createLocalCacheLink = config => new LocalCacheLink(config)
 
-export { LocalLink, createLocalLink }
+export { LocalCacheLink, createLocalCacheLink }

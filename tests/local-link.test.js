@@ -2,11 +2,11 @@ import { ApolloLink, execute, toPromise, Observable } from 'apollo-link'
 
 import localStorage from 'localStorage'
 
-import { LocalLink, hasLocalDirective } from 'apollo-link-local'
+import { LocalCacheLink, hasLocalDirective } from 'apollo-link-local-cache'
 
 import fixtures from './fixtures'
 
-describe('LocalLink', () => {
+describe('LocalCacheLink', () => {
   let called
   let operations
   let results
@@ -24,23 +24,23 @@ describe('LocalLink', () => {
   describe('construct', () => {
     it('should construct with minimal config', () => {
       // eslint-disable-next-line no-new
-      new LocalLink()
+      new LocalCacheLink()
     })
 
     it('should throw when no storage can be determined', () => {
       delete global.localStorage
-      expect(() => new LocalLink()).toThrow(/storage to use/)
+      expect(() => new LocalCacheLink()).toThrow(/storage to use/)
     })
 
     it('should throw when invalid storage provided', () => {
-      const link = new LocalLink({ storage: {} })
+      const link = new LocalCacheLink({ storage: {} })
       expect(() => execute(link, operations.simple)).toThrow(/valid storage/)
     })
   })
 
   it('passes a query forward on', async () => {
     const link = ApolloLink.from([
-      new LocalLink({ shouldCache: false }),
+      new LocalCacheLink({ shouldCache: false }),
       new ApolloLink(() => Observable.of(results.simple))
     ])
 
@@ -51,7 +51,7 @@ describe('LocalLink', () => {
 
   it('should cache the results of a query', async () => {
     const link = ApolloLink.from([
-      new LocalLink({ shouldCache: true }),
+      new LocalCacheLink({ shouldCache: true }),
       new ApolloLink(() => Observable.of(results.simple))
     ])
 
@@ -63,7 +63,7 @@ describe('LocalLink', () => {
 
   it('should reuse previous results of a query', async () => {
     const link = ApolloLink.from([
-      new LocalLink({ shouldCache: true }),
+      new LocalCacheLink({ shouldCache: true }),
       new ApolloLink(() => {
         called++
         return Observable.of(results.simple)
@@ -80,7 +80,7 @@ describe('LocalLink', () => {
 
   it('should cache the results of multiple queries', async () => {
     const link = ApolloLink.from([
-      new LocalLink({ shouldCache: true }),
+      new LocalCacheLink({ shouldCache: true }),
       new ApolloLink(({ operationName }) => {
         called++
 
@@ -99,7 +99,7 @@ describe('LocalLink', () => {
 
   it('should reuse previous results of multiple queries', async () => {
     const link = ApolloLink.from([
-      new LocalLink({ shouldCache: true }),
+      new LocalCacheLink({ shouldCache: true }),
       new ApolloLink(({ operationName }) => {
         called++
 
@@ -127,7 +127,7 @@ describe('LocalLink', () => {
       const shouldCache = ({ operationName }) => operationName === 'Other'
 
       const link = ApolloLink.from([
-        new LocalLink({ shouldCache }),
+        new LocalCacheLink({ shouldCache }),
         new ApolloLink(() => {
           called++
           return Observable.of(results.simple)
@@ -144,7 +144,7 @@ describe('LocalLink', () => {
 
     it('should identify queries using hasLocalDirective', async () => {
       const link = ApolloLink.from([
-        new LocalLink({ shouldCache: hasLocalDirective }),
+        new LocalCacheLink({ shouldCache: hasLocalDirective }),
         new ApolloLink(() => Observable.of(results.simple))
       ])
 
@@ -179,7 +179,7 @@ describe('LocalLink', () => {
       const storage = generateStorage()
 
       const link = ApolloLink.from([
-        new LocalLink({ storage }),
+        new LocalCacheLink({ storage }),
         new ApolloLink(() => {
           called++
           return Observable.of(results.simple)
@@ -201,7 +201,7 @@ describe('LocalLink', () => {
       const factory = jest.fn(operation => storage)
 
       const link = ApolloLink.from([
-        new LocalLink({ storage: factory }),
+        new LocalCacheLink({ storage: factory }),
         new ApolloLink(() => {
           called++
           return Observable.of(results.simple)
@@ -223,7 +223,7 @@ describe('LocalLink', () => {
       const factory = jest.fn(operation => storage)
 
       const link = ApolloLink.from([
-        new LocalLink({ storage: factory }),
+        new LocalCacheLink({ storage: factory }),
         new ApolloLink(() => Observable.of(results.simple))
       ])
 
@@ -243,7 +243,7 @@ describe('LocalLink', () => {
       }
 
       const link = ApolloLink.from([
-        new LocalLink(config),
+        new LocalCacheLink(config),
         new ApolloLink(() => Observable.of(results.simple))
       ])
 

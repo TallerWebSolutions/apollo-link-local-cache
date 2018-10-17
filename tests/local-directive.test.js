@@ -1,4 +1,4 @@
-import { hasLocalDirective } from 'apollo-link-local'
+import { hasLocalDirective } from 'apollo-link-local-cache'
 import fixtures from './fixtures'
 
 describe('hasLocalDirective', () => {

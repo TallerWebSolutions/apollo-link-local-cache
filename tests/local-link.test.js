@@ -1,60 +1,10 @@
-import {
-  ApolloLink,
-  execute,
-  toPromise,
-  Observable,
-  createOperation
-} from 'apollo-link'
+import { ApolloLink, execute, toPromise, Observable } from 'apollo-link'
 
-import gql from 'graphql-tag'
 import localStorage from 'localStorage'
 
 import { LocalLink } from 'apollo-link-local'
 
-const queries = {
-  simple: gql`
-    query Simple {
-      field
-    }
-  `,
-
-  other: gql`
-    query Other {
-      other
-    }
-  `,
-
-  directive: gql`
-    query LocalDirective @local {
-      field
-    }
-  `
-}
-
-const variables = {}
-const extensions = {}
-
-const operations = {
-  simple: createOperation({}, { query: queries.simple, variables, extensions }),
-  other: createOperation({}, { query: queries.other, variables, extensions }),
-  directive: createOperation(
-    {},
-    { query: queries.directive, variables, extensions }
-  )
-}
-
-// Fulfil operation names.
-for (let i in operations) {
-  operations[i].operationName = operations[i].query.definitions.find(
-    ({ kind }) => kind === 'OperationDefinition'
-  ).name.value
-}
-
-const results = {
-  simple: { data: { field: 'simple value' } },
-  other: { data: { other: 'other value' } },
-  directive: { data: { field: 'directive value' } }
-}
+import { operations, results } from './fixtures'
 
 describe('LocalLink', () => {
   let called

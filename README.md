@@ -65,6 +65,14 @@ import {
 const link = new LocalCacheLink({ shouldCache })
 ```
 
+And then, define your queries as such:
+
+```gql
+query Name @local {
+  field
+}
+```
+
 ## Context
 
 The LocalCacheLink does not use the context for anything, but customization of the config options will often receive the full `operation`, meaning they can achieve their purpose by using the context if necessary.

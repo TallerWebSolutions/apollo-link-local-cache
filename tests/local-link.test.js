@@ -2,17 +2,23 @@ import { ApolloLink, execute, toPromise, Observable } from 'apollo-link'
 
 import localStorage from 'localStorage'
 
-import { LocalLink } from 'apollo-link-local'
+import { LocalLink, hasLocalDirective } from 'apollo-link-local'
 
-import { operations, results } from './fixtures'
+import fixtures from './fixtures'
 
 describe('LocalLink', () => {
   let called
+  let operations
+  let results
 
   beforeEach(() => {
     called = 0
     localStorage.clear()
     global.localStorage = localStorage
+
+    const newFixtures = fixtures()
+    operations = newFixtures.operations
+    results = newFixtures.results
   })
 
   describe('construct', () => {
@@ -134,6 +140,26 @@ describe('LocalLink', () => {
       expect(localStorage.getItem(operations.other.toKey())).not.toBeNull()
       expect(localStorage.getItem(operations.simple.toKey())).toBeNull()
       expect(called).toBe(2)
+    })
+
+    it('should identify queries using hasLocalDirective', async () => {
+      const link = ApolloLink.from([
+        new LocalLink({ shouldCache: hasLocalDirective }),
+        new ApolloLink(() => Observable.of(results.simple))
+      ])
+
+      const { simple, localDirective, otherDirective } = operations
+
+      await toPromise(execute(link, simple))
+      await toPromise(execute(link, otherDirective))
+      await toPromise(execute(link, localDirective))
+
+      // Test smartly because keys diffeer after directive extraction.
+      Object.keys(localStorage).forEach(key => {
+        expect(key).not.toContain(simple.operationName)
+        expect(key).not.toContain(otherDirective.operationName)
+        expect(key).toContain(localDirective.operationName)
+      })
     })
   })
 

@@ -44,6 +44,8 @@ A callback to generate a key for an operation. Defaults to using `operation.toKe
 
 The Storage in use. Will default to window.localStorage when available. Can also be a callback, in which case it will be called with the current `operation` and should retrieve a valid storage.
 
+> Should be complient to https://www.w3.org/TR/webstorage/#storage
+
 #### `normalize`
 
 Normalization callback, which receives the `operation`. Executed prior to storing a query result.

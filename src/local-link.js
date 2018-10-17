@@ -40,10 +40,24 @@ class LocalLink extends ApolloLink {
    */
   storage
 
+  /**
+   * @property {Function} [normalize] - Normalization callback. Executed
+   * prior to storing a query result.
+   */
+  normalize
+
+  /**
+   * @property {Function} [denormalize] - Denormalization callback. Executed
+   * after retrieving a cached query result from the store.
+   */
+  denormalize
+
   constructor ({
     shouldCache = true,
     generateKey = operation => operation.toKey(),
-    storage = typeof localStorage !== 'undefined' ? localStorage : null
+    storage = typeof localStorage !== 'undefined' ? localStorage : null,
+    normalize = data => JSON.stringify(data),
+    denormalize = data => JSON.parse(data)
   } = {}) {
     super()
 
@@ -54,11 +68,9 @@ class LocalLink extends ApolloLink {
     this.generateKey = generateKey
     this.shouldCache = shouldCache
     this.storage = storage
+    this.normalize = normalize
+    this.denormalize = denormalize
   }
-
-  normalize = data => JSON.stringify(data)
-
-  denormalize = data => JSON.parse(data)
 
   /**
    * Determines if an operation is cacheable or not.

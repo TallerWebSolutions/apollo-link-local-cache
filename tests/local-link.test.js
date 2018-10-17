@@ -258,4 +258,31 @@ describe('LocalLink', () => {
       expect(factory).toHaveBeenCalledWith(operations.simple)
     })
   })
+
+  describe('normalization/denormalization', () => {
+    it('should be possible to provide a custom normalizer/denormalizer', async () => {
+      const config = {
+        normalize: jest.fn(data => JSON.stringify(data)),
+        denormalize: jest.fn(data => JSON.parse(data))
+      }
+
+      const link = ApolloLink.from([
+        new LocalLink(config),
+        new ApolloLink(() => Observable.of(results.simple))
+      ])
+
+      await toPromise(execute(link, operations.simple))
+      await toPromise(execute(link, operations.simple))
+
+      expect(config.normalize).toHaveBeenCalledWith(
+        results.simple,
+        operations.simple
+      )
+
+      expect(config.denormalize).toHaveBeenCalledWith(
+        JSON.stringify(results.simple),
+        operations.simple
+      )
+    })
+  })
 })
